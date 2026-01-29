@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Stock Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f2f4f7;
+  margin:0;
+  padding:20px;
+}
+
+.container{
+  max-width:600px;
+  margin:auto;
+  background:#fff;
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+h2{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+.search-box{
+  display:flex;
+  gap:10px;
+}
+
+input{
+  flex:1;
+  padding:12px;
+  font-size:16px;
+}
+
+button{
+  padding:12px 18px;
+  font-size:16px;
+  cursor:pointer;
+  background:#0d6efd;
+  color:#fff;
+  border:none;
+  border-radius:5px;
+}
+
+button:hover{
+  background:#0b5ed7;
+}
+
+.result{
+  margin-top:20px;
+  padding:15px;
+  border-radius:8px;
+  display:none;
+}
+
+.low{
+  background:#ffe5e5;
+  border-left:5px solid red;
+}
+
+.ok{
+  background:#e7f7ec;
+  border-left:5px solid green;
+}
+
+.label{
+  font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h2>Stock Item Search</h2>
+
+  <div class="search-box">
+    <input type="text" id="code" placeholder="Enter Item Code (eg: F1)">
+    <button onclick="searchItem()">Search</button>
+  </div>
+
+  <div id="output" class="result"></div>
+</div>
+
+<script>
+const sheetURL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vQqCfLpp-CK_qZ0rlDKT0SbUTL--j24S-S4bCTK33aCJDmkH1YVgoll_g8INDHJO0YOBvgcpaWsMcY_/pub?gid=0&single=true&output=tsv";
+
+async function searchItem(){
+  const code = document.getElementById("code").value.trim().toUpperCase();
+  const output = document.getElementById("output");
+  output.style.display="none";
+
+  if(!code){
+    alert("Enter Item Code");
+    return;
+  }
+
+  const res = await fetch(sheetURL);
+  const text = await res.text();
+  const rows = text.split("\n").map(r=>r.split("\t"));
+
+  const data = rows.slice(1); // remove header
+  let found = false;
+
+  for(let r of data){
+    if(r[0].trim().toUpperCase() === code){
+      found = true;
+      const qty = parseInt(r[2]);
+
+      output.className = "result " + (qty <= 5 ? "low":"ok");
+      output.innerHTML = `
+        <div><span class="label">Item Code:</span> ${r[0]}</div>
+        <div><span class="label">Item Name:</span> ${r[1]}</div>
+        <div><span class="label">Quantity:</span> ${r[2]}</div>
+        <div><span class="label">Remarks:</span> ${r[3] || ""}</div>
+      `;
+      output.style.display="block";
+      break;
+    }
+  }
+
+  if(!found){
+    alert("Item Code not found");
+  }
+}
+</script>
+
+</body>
+</html>
